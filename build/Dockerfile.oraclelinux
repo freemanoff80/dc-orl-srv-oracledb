@@ -1,0 +1,101 @@
+ARG IMAGE_VERSION
+FROM oraclelinux:${IMAGE_VERSION}
+
+#ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=Europe/Moscow 
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Args For Users Settings
+ARG ROOT_USER_PASSWORD
+
+ARG ADD_USER_NAME
+ARG ADD_USER_PASSWORD
+ARG ADD_USER_SUDO
+
+#ARG ORACLE_BASE=/u01/app/oracle
+#ARG ORACLE_HOME=/u01/app/oracle/product/19.3/db_home
+ARG HOSTNAME
+
+### Update OS
+RUN dnf -y update
+
+### Install Packages
+RUN dnf -y install \
+systemd \
+bind-utils \
+vim \
+less \
+net-tools \
+iputils \
+iproute \
+nmap-ncat \
+sudo \
+openssh-server \
+oracle-database-preinstall-19c
+
+### Clean DNF Packages
+RUN dnf clean all
+
+
+### Settings For Root User 
+RUN if [ -z "${ROOT_USER_PASSWORD}" ]; then \
+        echo ROOT_USER_PASSWORD is EMPTY; \
+    else \
+        echo root:${ROOT_USER_PASSWORD} |chpasswd && \
+        echo "PermitRootLogin yes" >> /etc/ssh/sshd_config; \
+    fi
+
+### Settings For Additional User
+RUN if [ -z "${ADD_USER_NAME}" ]; then \
+        echo ADD_USER_NAME is EMPTY; \
+    else \
+        if [ ${ADD_USER_SUDO} ]; then \
+            useradd -G sudo -s /bin/bash -m ${ADD_USER_NAME}; \
+        else \
+            useradd -s /bin/bash -m ${ADD_USER_NAME}; \
+        fi; \
+        echo ${ADD_USER_NAME}:${ADD_USER_PASSWORD} |chpasswd; \
+    fi
+
+
+### Setting For Oracle DataBase
+
+# Copy .bash_profile To Home Directory User ORACLE
+COPY copyfiles/.bash_profile /home/oracle/
+RUN chown oracle:oinstall /home/oracle/.bash_profile
+
+# Add sudo ROOT For User ORACLE
+RUN echo  "oracle ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# Create DB Oracle Home Directory
+RUN source /home/oracle/.bash_profile && \
+    mkdir -p ${ORACLE_HOME} && \
+    chown -R oracle:oinstall /u01 && \
+    chmod -R 775 /u01
+
+# Copy DB Oracle Disctibutive 
+RUN mkdir /tmp/db-distrib
+COPY copyfiles/db-distrib/* /tmp/db-distrib/
+
+# Copy Config Files For Install DB
+RUN mkdir /root/.config_files
+COPY copyfiles/db_new_install.sh        /root/.config_files/
+COPY copyfiles/db_config_listener.sh    /root/.config_files/
+COPY copyfiles/tnsnames.ora             /root/.config_files/
+COPY copyfiles/listener.ora             /root/.config_files/
+
+
+### Setting For Service SSH
+RUN echo -e "PasswordAuthentication yes\nPort 2222" >> /etc/ssh/sshd_config
+RUN systemctl enable sshd
+
+WORKDIR /root
+
+### Expose Port For SSH Service
+EXPOSE 2222
+EXPOSE 1521
+
+VOLUME [ "/sys/fs/cgroup" ]
+
+# Running Services
+CMD [ "/sbin/init" ]

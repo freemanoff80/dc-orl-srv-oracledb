@@ -1,0 +1,55 @@
+
+version: '3'
+
+services:
+
+    oraclelinux:
+        container_name: dc-orl-srv-oracledb
+        restart: unless-stopped
+        hostname: dc-orl-srv-oracledb
+        privileged: True
+        build:
+            context: ./build
+            dockerfile: Dockerfile.oraclelinux
+            args:
+                #IMAGE_VERSION: latest
+                IMAGE_VERSION: 8.6
+                HOSTNAME: dc-orl-srv-oracledb
+                ### If need root access, set a password
+                ROOT_USER_PASSWORD: changeme
+                ### If need to add another user, set the parameters
+                #ADD_USER_NAME: adminus
+                #ADD_USER_PASSWORD: changeme
+                #ADD_USER_SUDO: "yes"
+                #ORACLE_BASE: /u01/app/oracle
+                #ORACLE_HOME: /u01/app/oracle/product/19.3/db_home
+                #ORACLE_SID: CDB
+
+        networks:
+            - dc-net
+        ports:
+            - 42022:2222
+            - 41521:1521
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+            - /sys/fs/cgroup:/sys/fs/cgroup:ro
+            - data-oracle-u01:/u01
+
+
+volumes:
+  data-oracle-u01:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "./data-oracle/u01"
+
+
+networks:
+    dc-net:
+        name: dc-net
+        ipam:
+            driver: default
+            ### If need set special IP Net Address
+            #config:
+            #    - subnet: 172.16.1.0/24

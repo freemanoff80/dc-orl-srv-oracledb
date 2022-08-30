@@ -1,0 +1,25 @@
+LISTENER =
+  (DESCRIPTION_LIST =
+    (DESCRIPTION =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 0.0.0.0)(PORT = 1521))
+      (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+    )
+  )
+
+SID_LIST_LISTENER =
+  (SID_LIST = 
+    (SID_DESC =
+      (GLOBAL_DBNAME = CDB)
+      (ORACLE_HOME = /u01/app/oracle/product/19.3/db_home)
+      (SID_NAME = CDB)
+      (ENVS="TNS_ADMIN=/u01/app/oracle/product/19.3/db_home/network/admin")
+    )
+    (SID_DESC = 
+      (GLOBAL_DBNAME = PDB1)
+      (ORACLE_HOME = /u01/app/oracle/product/19.3/db_home)
+      (SID_NAME = PDB1)
+      (ENVS="TNS_ADMIN=/u01/app/oracle/product/19.3/db_home/network/admin")
+    )
+  )
+
+ADR_BASE_LISTENER = /u01/app/oracle
