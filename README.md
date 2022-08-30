@@ -2,7 +2,7 @@
 
 Docker-Compose Oracle Linux Image With Oracle DB And Systemd Service
 
-**!!! After clone repository, delete file ./data-oracle/u01/.gitkeep. Directory ./data-oracle/u01/ must be empty before run Docker.**
+**!!! After clone repository, DELETE file ./data-oracle/u01/.gitkeep. Directory ./data-oracle/u01/ must be empty before run Docker.**
 
  - Current For Oracle Database 19c
 
